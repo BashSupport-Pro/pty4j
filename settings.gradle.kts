@@ -1,1 +1,1 @@
-rootProject.name = "pty4j"
+rootProject.name = "pty4j-bashsupport"

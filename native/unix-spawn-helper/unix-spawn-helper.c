@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+// BashSupport Pro
+#include <sys/resource.h>
+
 extern int ptys_open(int fdm, const char *pts_name, bool acquire);
 
 extern void set_noecho(int fd);
@@ -40,8 +43,10 @@ int main (int argc, char* argv[]) {
   const int fdm = parseInt(argv[4]);
   const char *err_pts_name = argv[5];
   const int err_fdm = parseInt(argv[6]);
-  char *file = argv[7];
-  argv = &argv[7];
+  const char *add_pts_name = argv[7]; // BashSupport Pro
+  const int add_pts_fdm = parseInt(argv[8]); // BashSupport Pro
+  char *file = argv[9];
+  argv = &argv[9];
 
   chdir(cwd);
 
@@ -66,6 +71,25 @@ int main (int argc, char* argv[]) {
     }
   }
 
+  // BashSupport Pro, lower open file limit to prevent a slow pkexec
+  struct rlimit old_lim, lim;
+  if (getrlimit(RLIMIT_NOFILE, &old_lim) == 0) {
+    if (old_lim.rlim_max > 65536) {
+      lim.rlim_max = 65536;
+      if (old_lim.rlim_cur > 65536) lim.rlim_cur = 65536;
+      setrlimit(RLIMIT_NOFILE, &lim); // ignoring return value
+    }
+  }
+  // BashSupport Pro
+  int add_fds = -1;
+  if (add_pts_fdm >= 0) {
+      add_fds = ptys_open(add_pts_fdm, add_pts_name, true);
+      if (add_fds < 0) {
+          fprintf(stderr, "%s(%d): returning due to error with add_fdm: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+          return -1;
+      }
+  }
+
   if (consoleMode) {
     set_noecho(fds);
     if (setpgid(getpid(), getpid()) < 0) {
@@ -81,6 +105,8 @@ int main (int argc, char* argv[]) {
 
   close(fds);  /* done with fds. */
   if (consoleMode && err_fds >= 0) close(err_fds);
+
+  if (add_pts_fdm >= 0) close(add_pts_fdm); // BashSupport Pro
 
   restore_signals();
 
