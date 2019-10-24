@@ -1,6 +1,6 @@
 package testData;
 
-import com.pty4j.TestUtil;
+import bashpro.pty4j.TestUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;

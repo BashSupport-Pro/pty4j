@@ -31,13 +31,13 @@ INSTALL_DIR_X86_64 = ../os/$(OS)
 INSTALL_DIR_LINUX_X86 = ../os/$(LINUX)/$(ARCH_X86)
 INSTALL_DIR_LINUX_X86_64 = ../os/$(LINUX)/$(ARCH_X86_64)
 
-LIB_NAME_PTY = libpty.so
-LIB_NAME_PTY_DARWIN = libpty.dylib
-LIB_NAME_FULL_PTY_X86 = $(INSTALL_DIR_X86)/libpty.dylib
-LIB_NAME_FULL_PTY_X86_64 = $(INSTALL_DIR_X86_64)/libpty.dylib
+LIB_NAME_PTY = libpty-bashpro.so
+LIB_NAME_PTY_DARWIN = libpty-bashpro.dylib
+LIB_NAME_FULL_PTY_X86 = $(INSTALL_DIR_X86)/libpty-bashpro.dylib
+LIB_NAME_FULL_PTY_X86_64 = $(INSTALL_DIR_X86_64)/libpty-bashpro.dylib
 
-LIB_NAME_FULL_PTY_LINUX_X86 = $(INSTALL_DIR_LINUX_X86)/libpty.so
-LIB_NAME_FULL_PTY_LINUX_X86_64 = $(INSTALL_DIR_LINUX_X86_64)/libpty.so
+LIB_NAME_FULL_PTY_LINUX_X86 = $(INSTALL_DIR_LINUX_X86)/libpty-bashpro.so
+LIB_NAME_FULL_PTY_LINUX_X86_64 = $(INSTALL_DIR_LINUX_X86_64)/libpty-bashpro.so
 
 OBJS_PTY_X86 = exec_pty_$(ARCH_X86).o openpty_$(ARCH_X86).o pfind_$(ARCH_X86).o
 OBJS_PTY_X86_64 = exec_pty_$(ARCH_X86_64).o openpty_$(ARCH_X86_64).o pfind_$(ARCH_X86_64).o

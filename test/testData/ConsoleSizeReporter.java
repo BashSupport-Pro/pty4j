@@ -1,6 +1,6 @@
 package testData;
 
-import com.pty4j.TestUtil;
+import bashpro.pty4j.TestUtil;
 import com.pty4j.WinSize;
 import com.pty4j.unix.PtyHelpers;
 import com.sun.jna.Platform;

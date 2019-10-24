@@ -1,6 +1,6 @@
 package testData;
 
-import com.pty4j.TestUtil;
+import bashpro.pty4j.TestUtil;
 
 public class RepeatTextWithTimeout {
   public static void main(String[] args) throws InterruptedException {
