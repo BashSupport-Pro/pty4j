@@ -1,16 +1,18 @@
 package com.pty4j.unix
 
+import com.pty4j.AdditionalPtyProcess
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import com.pty4j.util.PtyUtil
 import java.io.File
 
-internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
+internal class BashSupportProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
   command: MutableList<String>,
   environmentMap: MutableMap<String, String>,
   workingDirectory: String,
   pty: Pty,
   errPty: Pty?,
+  additionalPty: Pty?, // BashSupport Pro
   consoleMode: Boolean,
   initialColumns: Int?,
   initialRows: Int?,
@@ -20,6 +22,15 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
   val process: Process
 
   init {
+    // BashSupport Pro
+    if (additionalPty != null) {
+      for (i in 0 until command.size) {
+        if (AdditionalPtyProcess.PTY_PLACEHOLDER == command[i]) {
+          command[i] = additionalPty.slaveName
+        }
+      }
+    }
+
     val spawnHelper = PtyUtil.resolveNativeFile("pty4j-unix-spawn-helper")
     val builder = ProcessBuilder()
     builder.command(listOf(spawnHelper.absolutePath,
@@ -29,6 +40,8 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
                            pty.masterFD.toString(),
                            errPty?.slaveName.orEmpty(),
                            (errPty?.masterFD ?: -1).toString()
+                           , additionalPty?.slaveName.orEmpty() // BashSupport Pro
+                           , (additionalPty?.masterFD ?: -1).toString() // BashSupport Pro
                            ) + command)
     val environment = builder.environment()
     environment.clear()
@@ -57,6 +70,21 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
         catch (e: UnixPtyException) {
           if (e.errno != UnixPtyProcess.ENOTTY) {
             break
+          }
+        }
+      }
+
+      // BashSupport Pro
+      if (additionalPty != null) {
+        for (attempt in 0..999) {
+          try {
+            additionalPty.setWindowSize(size, ptyProcess)
+            break
+          }
+          catch (e: UnixPtyException) {
+            if (e.errno != UnixPtyProcess.ENOTTY) {
+              break
+            }
           }
         }
       }

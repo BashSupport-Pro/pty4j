@@ -56,10 +56,16 @@ void restore_signals() {
     restore_signal(SIGQUIT);
 }
 
-static int sys_close_range_wrapper(unsigned int from_fd_inclusive) {
+static int sys_close_range_wrapper(unsigned int from_fd_inclusive, /*BashSupport Pro*/int excluded_fd) {
     // Use fast `close_range` (https://man7.org/linux/man-pages/man2/close_range.2.html) if available.
     // Cannot call `close_range` from libc, as it may be unavailable in older libc.
 # if defined(__linux__) && defined(SYS_close_range) && defined(CLOSE_RANGE_UNSHARE)
+    // BashSupport Pro
+    if (excluded_fd >= 1 && excluded_fd >= from_fd_inclusive) {
+        int result = syscall(SYS_close_range, from_fd_inclusive, excluded_fd-1, CLOSE_RANGE_UNSHARE);
+        return syscall(SYS_close_range, excluded_fd+1, ~0U, CLOSE_RANGE_UNSHARE);
+    }
+
     return syscall(SYS_close_range, from_fd_inclusive, ~0U, CLOSE_RANGE_UNSHARE);
 # else
     errno = ENOSYS;
@@ -67,11 +73,12 @@ static int sys_close_range_wrapper(unsigned int from_fd_inclusive) {
 # endif
 }
 
-static int close_all_fds_using_parsing(unsigned int from_fd_inclusive) {
+static int close_all_fds_using_parsing(unsigned int from_fd_inclusive, /*BashSupport Pro*/int excluded_fd) {
     // If `opendir` is implemented using a file descriptor, we may close it accidentally.
     // Let's close a few lowest file descriptors, in hope that `opendir` will use it.
     int lowest_fds_to_close = 2;
     for (int i = 0; i < lowest_fds_to_close; i++) {
+        if (excluded_fd != from_fd_inclusive + i) // BashSupport Pro
         close(from_fd_inclusive + i);
     }
 
@@ -90,6 +97,7 @@ static int close_all_fds_using_parsing(unsigned int from_fd_inclusive) {
         if (isdigit(direntp->d_name[0])) {
             int fd = strtol(direntp->d_name, NULL, 10);
             if (fd >= from_fd_inclusive + lowest_fds_to_close && fd != dirfd(dirp)) {
+                if (excluded_fd != fd) // BashSupport Pro
                 close(fd);
             }
         }
@@ -100,23 +108,25 @@ static int close_all_fds_using_parsing(unsigned int from_fd_inclusive) {
     return 0;
 }
 
-static void close_all_fds_fallback(unsigned int from_fd_inclusive) {
+static void close_all_fds_fallback(unsigned int from_fd_inclusive, /*BashSupport Pro*/int excluded_fd) {
     int fdlimit = sysconf(_SC_OPEN_MAX);
     if (fdlimit == -1) fdlimit = 65535; // arbitrary default, just in case
     for (int fd = from_fd_inclusive; fd < fdlimit; fd++) {
+        if (fd != excluded_fd) // BashSupport Pro
         close(fd);
     }
 }
 
-static void close_all_fds() {
+static void close_all_fds(/*BashSupport Pro*/int excluded_fd) {
     unsigned int from_fd = STDERR_FILENO + 1;
-    if (sys_close_range_wrapper(from_fd) == 0) return;
-    if (close_all_fds_using_parsing(from_fd) == 0) return;
-    close_all_fds_fallback(from_fd);
+    if (sys_close_range_wrapper(from_fd, /*BashSupport Pro*/ excluded_fd) == 0) return;
+    if (close_all_fds_using_parsing(from_fd, /*BashSupport Pro*/ excluded_fd) == 0) return;
+    close_all_fds_fallback(from_fd, /*BashSupport Pro*/ excluded_fd);
 }
 
 pid_t exec_pty(const char *path, char *const argv[], char *const envp[], const char *dirpath,
-		       const char *pts_name, int fdm, const char *err_pts_name, int err_fdm, int console)
+		       const char *pts_name, int fdm, const char *err_pts_name, int err_fdm, int console,
+		       /* BashSupport Pro */ const char *add_pts_name, int add_pts_fdm)
 {
 	pid_t childpid;
 	char *full_path;
@@ -163,9 +173,20 @@ pid_t exec_pty(const char *path, char *const argv[], char *const envp[], const c
 			}
 		}
 
+    // BashSupport Pro
+    int add_fds = -1;
+    if (add_pts_fdm >= 0) {
+        add_fds = ptys_open(add_pts_fdm, add_pts_name, true);
+        if (add_fds < 0) {
+            fprintf(stderr, "%s(%d): returning due to error with add_fdm: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+            return -1;
+        }
+    }
+
 		/* close masters, no need in the child */
 		close(fdm);
 		if (console && err_fdm >= 0) close(err_fdm);
+		if (add_pts_fdm >= 0) close(add_pts_fdm);
 
 		if (console) {
 			set_noecho(fds);
@@ -184,7 +205,7 @@ pid_t exec_pty(const char *path, char *const argv[], char *const envp[], const c
 		if (console && err_fds >= 0) close(err_fds);
 
 		/* Close all the fd's in the child */
-        close_all_fds();
+    close_all_fds(add_fds); // BashSupport Pro
 
 		restore_signals();
 

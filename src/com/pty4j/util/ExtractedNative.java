@@ -25,8 +25,27 @@ class ExtractedNative {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExtractedNative.class);
   static final String[] LOCATIONS = {
+    // BashSupport Pro
+    "darwin/libpty-bashpro.dylib",
+    "darwin/pty4j-unix-spawn-helper",
+    "linux/x86-64/libpty-bashpro.so",
+    "linux/arm/libpty-bashpro.so",
+    "linux/aarch64/libpty-bashpro.so",
+    "linux/ppc64le/libpty-bashpro.so",
+    "win/aarch64/conpty.dll",
+    "win/aarch64/OpenConsole.exe",
+    "win/aarch64/win-helper-bashpro.dll",
+    "win/aarch64/cyglaunch.exe",
+    "win/aarch64/winpty-agent.exe",
+    "win/aarch64/winpty-bashpro.dll",
+    "win/x86-64/conpty.dll",
+    "win/x86-64/OpenConsole.exe",
+    "win/x86-64/cyglaunch.exe",
+    "win/x86-64/win-helper-bashpro.dll",
+    "win/x86-64/winpty-agent.exe",
+    "win/x86-64/winpty-bashpro.dll",
+/*
       "darwin/libpty.dylib",
-      "darwin/pty4j-unix-spawn-helper",
       "freebsd/x86/libpty.so",
       "freebsd/x86-64/libpty.so",
       "linux/x86/libpty.so",
@@ -48,8 +67,10 @@ class ExtractedNative {
       "win/x86-64/win-helper.dll",
       "win/x86-64/winpty-agent.exe",
       "win/x86-64/winpty.dll"
+*/
   };
-  static final String DEFAULT_RESOURCE_NAME_PREFIX = "resources/com/pty4j/native/";
+  // BashSupport Pro
+  static final String DEFAULT_RESOURCE_NAME_PREFIX = "resources/bashpro/pty4j/native/";
   private static final Set<String> EXECUTABLE_PERMISSION = Set.of("darwin/pty4j-unix-spawn-helper");
 
   private static final ExtractedNative INSTANCE = new ExtractedNative();

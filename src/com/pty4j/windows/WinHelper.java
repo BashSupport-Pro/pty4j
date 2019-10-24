@@ -46,7 +46,7 @@ public final class WinHelper {
 
   private static class Holder {
     private static final WinHelperNativeLibrary INSTANCE = Native.load(
-        PtyUtil.resolveNativeFile("win-helper.dll").getAbsolutePath(),
+        PtyUtil.resolveNativeFile("win-helper-bashpro.dll").getAbsolutePath(),
         WinHelperNativeLibrary.class
     );
   }
