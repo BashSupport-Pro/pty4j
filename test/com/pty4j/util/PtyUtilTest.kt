@@ -17,9 +17,10 @@ class PtyUtilTest {
     }
   }
 
+  // BashSupport Pro
   private fun getLibraryName(): String = when {
-    Platform.isMac() -> "libpty.dylib"
-    Platform.isWindows() -> "winpty.dll"
-    else -> "libpty.so"
+    Platform.isMac() -> "libpty-bashpro.dylib"
+    Platform.isWindows() -> "winpty-bashpro.dll"
+    else -> "libpty-bashpro.so"
   }
 }

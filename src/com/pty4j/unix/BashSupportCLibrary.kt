@@ -6,7 +6,8 @@ import com.sun.jna.*
 import com.sun.jna.platform.unix.LibCAPI.size_t
 import com.sun.jna.platform.unix.LibCAPI.ssize_t
 
-internal object CLibrary {
+// renamed for BashSupport Pro, can probably be dropped when 0.13.2 is released
+internal object BashSupportCLibrary {
 
   const val O_WRONLY: Int = 0x00000001
   const val O_RDWR: Int = 0x00000002

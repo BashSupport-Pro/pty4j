@@ -9,12 +9,13 @@ import java.io.File
 import kotlin.time.DurationUnit
 import kotlin.time.TimeSource
 
-internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
+internal class BashSupportProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
   command: MutableList<String>,
   environmentMap: MutableMap<String, String>,
   workingDirectory: String,
   pty: Pty,
   errPty: Pty?,
+  additionalPty: Pty?, // BashSupport Pro
   consoleMode: Boolean,
   initialColumns: Int?,
   initialRows: Int?,
@@ -24,6 +25,15 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
   val process: Process
 
   init {
+    // BashSupport Pro
+    if (additionalPty != null) {
+      for (i in 0 until command.size) {
+        if (com.pty4j.AdditionalPtyProcess.PTY_PLACEHOLDER == command[i]) {
+          command[i] = additionalPty.slaveName
+        }
+      }
+    }
+
     val spawnHelper = PtyUtil.resolveNativeFile("pty4j-unix-spawn-helper")
     val builder = ProcessBuilder()
     builder.command(listOf(spawnHelper.absolutePath,
@@ -33,6 +43,8 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
                            pty.masterFD.toString(),
                            errPty?.slaveName.orEmpty(),
                            (errPty?.masterFD ?: -1).toString()
+                           , additionalPty?.slaveName.orEmpty() // BashSupport Pro
+                           , (additionalPty?.masterFD ?: -1).toString() // BashSupport Pro
                            ) + command)
     val environment = builder.environment()
     environment.clear()
@@ -49,6 +61,11 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
     process = builder.start()
 
     initTermSize(pty, ptyProcess, WinSize(initialColumns ?: 80, initialRows ?: 25))
+
+    // BashSupport Pro
+    if (additionalPty != null) {
+      initTermSize(additionalPty, ptyProcess, WinSize(initialColumns ?: 80, initialRows ?: 25))
+    }
   }
 
   private fun initTermSize(pty: Pty, ptyProcess: PtyProcess, initSize: WinSize) {
@@ -66,7 +83,7 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
       }
       catch (e: UnixPtyException) {
         lastException = e
-        if (e.errno != CLibrary.ENOTTY) {
+        if (e.errno != BashSupportCLibrary.ENOTTY) {
           break
         }
         Thread.sleep(2)
@@ -82,7 +99,6 @@ internal class ProcessBuilderUnixLauncher @Throws(Exception::class) constructor(
   }
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(ProcessBuilderUnixLauncher::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(BashSupportProcessBuilderUnixLauncher::class.java) // BashSupport Pro
   }
-
 }

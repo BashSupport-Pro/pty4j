@@ -3,3 +3,7 @@ build
 .idea/
 out/
 pty4j.iml
+*.o
+native/arm64/
+native/x86_64/
+bashsupport-pro-link

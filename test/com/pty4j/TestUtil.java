@@ -1,6 +1,7 @@
 package com.pty4j;
 
 import com.pty4j.unix.Pty;
+import com.pty4j.util.LazyValue;
 import com.pty4j.util.PtyUtil;
 import com.sun.jna.Platform;
 import com.sun.jna.platform.win32.Kernel32;
@@ -46,6 +47,7 @@ public class TestUtil {
                                     Logger.class,       // slf4j-api.jar
                                     Platform.class,     // jna.jar
                                     Kernel32.class,     // jna-platform.jar
+                                    LazyValue.class,    // BashSupport Pro, JetBrains' pty4j
                                     KotlinVersion.class /* kotlin-stdlib.jar */));
     result.add(aClass.getName());
     result.addAll(Arrays.asList(args));

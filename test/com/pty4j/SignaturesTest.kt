@@ -26,7 +26,7 @@ import java.util.*
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
-
+@org.junit.Ignore // BashSupport Pro has its own signature validation
 class SignaturesTest {
   @JvmField
   @Rule
