@@ -11,8 +11,7 @@ import java.util.Map;
  * @author traff
  */
 public class PtyUtil {
-
-  public static final String PREFERRED_NATIVE_FOLDER_KEY = "pty4j.preferred.native.folder";
+  public static final String PREFERRED_NATIVE_FOLDER_KEY = "pty4j-bashsupport.preferred.native.folder"; // BashSupport Pro
 
   public static String[] toStringArray(Map<String, String> environment) {
     if (environment == null) return new String[0];

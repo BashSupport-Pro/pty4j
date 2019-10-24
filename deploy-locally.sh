@@ -1,0 +1,1 @@
+PUBLISHING_USER=jansorg gradle clean build testJar publishToMavenLocal
