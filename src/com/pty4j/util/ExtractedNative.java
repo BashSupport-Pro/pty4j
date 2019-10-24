@@ -23,6 +23,21 @@ class ExtractedNative {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExtractedNative.class);
   static final String[] LOCATIONS = {
+          // BashSupport Pro
+          "darwin/libpty-bashpro.dylib",
+          "linux/x86-64/libpty-bashpro.so",
+          "linux/arm/libpty-bashpro.so",
+          "linux/aarch64/libpty-bashpro.so",
+          "linux/ppc64le/libpty-bashpro.so",
+          "win/x86-64/cyglaunch.exe",
+          "win/x86-64/win-helper-bashpro.dll",
+          "win/x86-64/winpty-agent.exe",
+          "win/x86-64/winpty-bashpro.dll",
+          "win/aarch64/win-helper-bashpro.dll",
+          "win/aarch64/cyglaunch.exe",
+          "win/aarch64/winpty-agent.exe",
+          "win/aarch64/winpty-bashpro.dll"
+/*
       "darwin/libpty.dylib",
       "freebsd/x86/libpty.so",
       "freebsd/x86-64/libpty.so",
@@ -41,8 +56,11 @@ class ExtractedNative {
       "win/x86-64/win-helper.dll",
       "win/x86-64/winpty-agent.exe",
       "win/x86-64/winpty.dll"
+*/
   };
-  static final String DEFAULT_RESOURCE_NAME_PREFIX = "resources/com/pty4j/native/";
+  // BashSupport Pro
+  static final String DEFAULT_RESOURCE_NAME_PREFIX = "resources/bashpro/pty4j/native/";
+//  static final String DEFAULT_RESOURCE_NAME_PREFIX = "resources/com/pty4j/native/";
 
   private static final ExtractedNative INSTANCE = new ExtractedNative();
   private String myResourceOsArchSubPath;

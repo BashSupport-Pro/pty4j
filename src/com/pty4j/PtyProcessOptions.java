@@ -22,7 +22,8 @@ public class PtyProcessOptions {
                     @Nullable Integer initialColumns,
                     @Nullable Integer initialRows,
                     boolean windowsAnsiColorEnabled,
-                    boolean unixOpenTtyToPreserveOutputAfterTermination) {
+                    boolean unixOpenTtyToPreserveOutputAfterTermination,
+                    /*BashSupport Pro*/boolean useAdditionalPTY) {
     myCommand = command;
     myEnvironment = environment;
     myDirectory = directory;
@@ -31,6 +32,8 @@ public class PtyProcessOptions {
     myInitialRows = initialRows;
     myWindowsAnsiColorEnabled = windowsAnsiColorEnabled;
     myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
+    // BashSupport Pro
+    myPassAdditionalPtyFD = useAdditionalPTY;
   }
 
   @NotNull
@@ -67,5 +70,12 @@ public class PtyProcessOptions {
 
   public boolean isUnixOpenTtyToPreserveOutputAfterTermination() {
     return myUnixOpenTtyToPreserveOutputAfterTermination;
+  }
+
+  // Changes for BashSupport Pro
+  private final boolean myPassAdditionalPtyFD;
+
+  public boolean isPassAdditionalPtyFD() {
+    return myPassAdditionalPtyFD;
   }
 }

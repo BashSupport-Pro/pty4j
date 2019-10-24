@@ -22,8 +22,9 @@ class NativePtyExecutor implements PtyExecutor {
 
   @Override
   public int execPty(String full_path, String[] argv, String[] envp, String dirpath, String pts_name, int fdm,
-                     String err_pts_name, int err_fdm, boolean console) {
-    return myPty4j.exec_pty(full_path, argv, envp, dirpath, pts_name, fdm, err_pts_name, err_fdm, console);
+                     String err_pts_name, int err_fdm, boolean console,
+                     /*BashSupport Pro*/String add_pts_name, int add_pty_fdm) {
+    return myPty4j.exec_pty(full_path, argv, envp, dirpath, pts_name, fdm, err_pts_name, err_fdm, console, /*BashSupport Pro*/add_pts_name, add_pty_fdm);
   }
 
   @Override
@@ -77,7 +78,9 @@ class NativePtyExecutor implements PtyExecutor {
 
   private interface Pty4J extends com.sun.jna.Library {
     int exec_pty(String full_path, String[] argv, String[] envp, String dirpath, String pts_name, int fdm,
-                 String err_pts_name, int err_fdm, boolean console);
+                 String err_pts_name, int err_fdm, boolean console,
+                 /*BashSupport Pro*/
+                 String additionalPtySlaveName, int additionalPtyMasterFD);
 
     int wait_for_child_process_exit(int child_pid);
 

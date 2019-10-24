@@ -11,8 +11,9 @@ import java.util.Map;
  * @author traff
  */
 public class PtyUtil {
-
-  public static final String PREFERRED_NATIVE_FOLDER_KEY = "pty4j.preferred.native.folder";
+  //public static final String PREFERRED_NATIVE_FOLDER_KEY = "pty4j.preferred.native.folder";
+  // BashSupport Pro
+  public static final String PREFERRED_NATIVE_FOLDER_KEY = "pty4j-bashsupport.preferred.native.folder";
 
   public static String[] toStringArray(Map<String, String> environment) {
     if (environment == null) return new String[0];
@@ -72,11 +73,17 @@ public class PtyUtil {
     String result;
 
     if (Platform.isMac()) {
-      result = "libpty.dylib";
+      // BashSupport Pro
+      result = "libpty-bashpro.dylib";
+      //result = "libpty.dylib";
     } else if (Platform.isWindows()) {
-      result = "winpty.dll";
+      // BashSupport Pro
+      result = "winpty-bashpro.dll";
+      //result = "winpty.dll";
     } else if (Platform.isLinux() || Platform.isFreeBSD() || Platform.isOpenBSD() || Platform.isAndroid()) {
-      result = "libpty.so";
+      // BashSupport Pro
+      result = "libpty-bashpro.so";
+      //result = "libpty.so";
     } else {
       throw new IllegalStateException("Platform " + Platform.getOSType() + " is not supported");
     }
