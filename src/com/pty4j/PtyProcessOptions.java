@@ -24,7 +24,8 @@ public class PtyProcessOptions {
                     @Nullable Integer initialRows,
                     boolean windowsAnsiColorEnabled,
                     boolean unixOpenTtyToPreserveOutputAfterTermination,
-                    boolean spawnProcessUsingJdkOnMacIntel) {
+                    boolean spawnProcessUsingJdkOnMacIntel
+                    /*BashSupport Pro*/, boolean useAdditionalPTY) {
     myCommand = command;
     myEnvironment = environment;
     myDirectory = directory;
@@ -34,6 +35,8 @@ public class PtyProcessOptions {
     myWindowsAnsiColorEnabled = windowsAnsiColorEnabled;
     myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
     mySpawnProcessUsingJdkOnMacIntel = spawnProcessUsingJdkOnMacIntel;
+    // BashSupport Pro
+    myPassAdditionalPtyFD = useAdditionalPTY;
   }
 
   @NotNull
@@ -74,5 +77,12 @@ public class PtyProcessOptions {
 
   public boolean isSpawnProcessUsingJdkOnMacIntel() {
     return mySpawnProcessUsingJdkOnMacIntel;
+  }
+
+  // Changes for BashSupport Pro
+  private final boolean myPassAdditionalPtyFD;
+
+  public boolean isPassAdditionalPtyFD() {
+    return myPassAdditionalPtyFD;
   }
 }

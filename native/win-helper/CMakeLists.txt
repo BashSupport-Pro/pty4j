@@ -13,4 +13,4 @@ endif()
 
 set(SOURCE_FILES win-helper.cpp)
 
-add_library(win-helper SHARED ${SOURCE_FILES})
+add_library(win-helper-bashpro SHARED ${SOURCE_FILES})

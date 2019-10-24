@@ -7,6 +7,8 @@
  */
 package com.pty4j.unix;
 
+import com.pty4j.AdditionalPtyProcess; // BashSupport Pro
+
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessOptions;
 import com.pty4j.WinSize;
@@ -23,7 +25,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 
-public final class UnixPtyProcess extends PtyProcess {
+public final class UnixPtyProcess extends PtyProcess /*BashSupport Pro*/implements AdditionalPtyProcess {
   private static final int NOOP = 0;
   
   // Signals with portable numbers (https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals)
@@ -33,7 +35,7 @@ public final class UnixPtyProcess extends PtyProcess {
   private static final Logger logger = LoggerFactory.getLogger(UnixPtyProcess.class);
 
   private final boolean myConsoleMode;
-  private final @Nullable ProcessBuilderUnixLauncher myLauncher;
+  private final @Nullable BashSupportProcessBuilderUnixLauncher myLauncher;
 
   private int pid = 0;
   private int myExitCode;
@@ -43,6 +45,11 @@ public final class UnixPtyProcess extends PtyProcess {
   private InputStream err;
   private final Pty myPty;
   private final Pty myErrPty;
+
+  // BashSupport Pro
+  private final Pty myAdditionalPty;
+  private OutputStream myAdditionalPtyOut;
+  private InputStream myAdditionalPtyIn;
 
   @Deprecated
   public UnixPtyProcess(String[] cmdarray, String[] envp, String dir, Pty pty, Pty errPty, boolean consoleMode) throws IOException {
@@ -56,20 +63,26 @@ public final class UnixPtyProcess extends PtyProcess {
     myPty = pty;
     myErrPty = errPty;
     myLauncher = null;
-    execInPty(cmdarray, envp, dir, pty, errPty, null, null);
+    myAdditionalPty = null; // BashSupport Pro
+    execInPty(cmdarray, envp, dir, pty, errPty, /*BashSupport Pro*/null, null, null);
   }
 
   public UnixPtyProcess(@NotNull PtyProcessOptions options, boolean consoleMode) throws IOException {
     myConsoleMode = consoleMode;
     myPty = new Pty(consoleMode, options.isUnixOpenTtyToPreserveOutputAfterTermination());
     myErrPty = options.isRedirectErrorStream() || !consoleMode ? null : new Pty();
+
+    //BashSupport Pro
+    myAdditionalPty = options.isPassAdditionalPtyFD() ? new Pty(false, true) : null;
+
     String dir = Objects.requireNonNullElse(options.getDirectory(), ".");
-    ProcessBuilderUnixLauncher launcher = null;
+    BashSupportProcessBuilderUnixLauncher launcher = null;
     if (Platform.isMac() && Platform.isIntel() && options.isSpawnProcessUsingJdkOnMacIntel()) {
       try {
-        launcher = new ProcessBuilderUnixLauncher(
+        launcher = new BashSupportProcessBuilderUnixLauncher(
           Arrays.asList(options.getCommand()), options.getEnvironment(), dir,
           myPty, myErrPty,
+          /*BashSupport Pro*/myAdditionalPty,
           consoleMode,
           options.getInitialColumns(), options.getInitialRows(), this
         );
@@ -80,7 +93,7 @@ public final class UnixPtyProcess extends PtyProcess {
     }
     myLauncher = launcher;
     if (myLauncher == null) {
-      execInPty(options.getCommand(), PtyUtil.toStringArray(options.getEnvironment()), dir, myPty, myErrPty,
+      execInPty(options.getCommand(), PtyUtil.toStringArray(options.getEnvironment()), dir, myPty, myErrPty, /*BashSupport Pro*/myAdditionalPty,
                 options.getInitialColumns(), options.getInitialRows());
     }
     else {
@@ -203,7 +216,7 @@ public final class UnixPtyProcess extends PtyProcess {
     return myConsoleMode;
   }
 
-  private void execInPty(String[] command, String[] environment, String workingDirectory, Pty pty, Pty errPty,
+  private void execInPty(String[] command, String[] environment, String workingDirectory, Pty pty, Pty errPty, /*BashSupport Pro*/Pty additionalPty,
                          @Nullable Integer initialColumns,
                          @Nullable Integer initialRows) throws IOException {
     String cmd = command[0];
@@ -218,8 +231,25 @@ public final class UnixPtyProcess extends PtyProcess {
     final int masterFD = pty.getMasterFD();
     final String errSlaveName = errPty == null ? null : errPty.getSlaveName();
     final int errMasterFD = errPty == null ? -1 : errPty.getMasterFD();
+
+    // BashSupport Pro
+    final String addPtySlaveName;
+    final int addPtyMasterFD;
+    if (additionalPty != null) {
+      addPtySlaveName = additionalPty.getSlaveName();
+      addPtyMasterFD = additionalPty.getMasterFD();
+      for (int i = 0; i < command.length; i++) { // it's possible that there's more than one placeholde
+        if (AdditionalPtyProcess.PTY_PLACEHOLDER.equals(command[i])) {
+          command[i] = addPtySlaveName;
+        }
+      }
+    } else {
+      addPtySlaveName = null;
+      addPtyMasterFD = -1;
+    }
+
     // int fdm = pty.get
-    Reaper reaper = new Reaper(command, environment, workingDirectory, slaveName, masterFD, errSlaveName, errMasterFD, myConsoleMode);
+    Reaper reaper = new Reaper(command, environment, workingDirectory, slaveName, masterFD, errSlaveName, errMasterFD,  myConsoleMode, /*BashSupport Pro*/addPtySlaveName, addPtyMasterFD);
 
     reaper.setDaemon(true);
     reaper.start();
@@ -248,8 +278,23 @@ public final class UnixPtyProcess extends PtyProcess {
             break;
           }
           catch (UnixPtyException e) {
-            if (e.getErrno() != CLibrary.ENOTTY) {
+            if (e.getErrno() != BashSupportCLibrary.ENOTTY) {
               break;
+            }
+          }
+        }
+
+        // BashSupport Pro
+        if (additionalPty != null) {
+          for (int attempt = 0; attempt < 1000; attempt++) {
+            try {
+              additionalPty.setWindowSize(size, this);
+              break;
+            }
+            catch (UnixPtyException e) {
+              if (e.getErrno() != BashSupportCLibrary.ENOTTY) {
+                break;
+              }
             }
           }
         }
@@ -306,7 +351,8 @@ public final class UnixPtyProcess extends PtyProcess {
   }
 
   int exec(String[] cmd, String[] envp, String dirname, String slaveName, int masterFD,
-           String errSlaveName, int errMasterFD, boolean console) throws IOException {
+           String errSlaveName, int errMasterFD, boolean console,
+           /*BashSupport Pro*/ String additionalPtyName, int additionalPtyMasterFD) throws IOException {
     int pid = -1;
 
     if (cmd == null) {
@@ -317,7 +363,7 @@ public final class UnixPtyProcess extends PtyProcess {
       return pid;
     }
 
-    return PtyHelpers.execPty(cmd[0], cmd, envp, dirname, slaveName, masterFD, errSlaveName, errMasterFD, console);
+    return PtyHelpers.execPty(cmd[0], cmd, envp, dirname, slaveName, masterFD, errSlaveName, errMasterFD, console, /*BashSupport Pro*/ additionalPtyName, additionalPtyMasterFD);
   }
 
   @Override
@@ -336,6 +382,16 @@ public final class UnixPtyProcess extends PtyProcess {
         throw new IllegalStateException(e);
       }
     }
+
+    // BashSupport Pro
+    if (myAdditionalPty != null) {
+      try {
+        myAdditionalPty.setWindowSize(winSize, this);
+      }
+      catch (UnixPtyException e) {
+        throw new IllegalStateException(e);
+      }
+    }
   }
 
   @Override
@@ -346,6 +402,25 @@ public final class UnixPtyProcess extends PtyProcess {
   @Override
   public long pid() {
     return myLauncher != null ? myLauncher.getProcess().pid() : pid;
+  }
+
+  // BashSupport Pro
+  public synchronized Pty getAdditionalPty() {
+    return myAdditionalPty;
+  }
+
+  public synchronized InputStream getAdditionalPtyInputStream() {
+    if (null == myAdditionalPtyIn && myAdditionalPty != null) {
+      myAdditionalPtyIn = myAdditionalPty.getInputStream();
+    }
+    return myAdditionalPtyIn;
+  }
+
+  public synchronized OutputStream getAdditionalPtyOutputStream() {
+    if (null == myAdditionalPtyOut && myAdditionalPty != null) {
+      myAdditionalPtyOut = myAdditionalPty.getOutputStream();
+    }
+    return myAdditionalPtyOut;
   }
 
   // Spawn a thread to handle the forking and waiting.
@@ -362,8 +437,12 @@ public final class UnixPtyProcess extends PtyProcess {
     private boolean myConsole;
     volatile Throwable myException;
 
+    // BashSupport Pro
+    private int myAdditionalPtyMasterFD;
+    private String myAdditionalPtySlaveName;
+
     public Reaper(String[] command, String[] environment, String workingDirectory, String slaveName, int masterFD, String errSlaveName,
-                  int errMasterFD, boolean console) {
+                  int errMasterFD, boolean console, /*BashSupport Pro*/String additionalPtySlaveName, int additionalPtyMasterFD) {
       super("PtyProcess Reaper for " + Arrays.toString(command));
       myCommand = command;
       myEnv = environment;
@@ -374,10 +453,13 @@ public final class UnixPtyProcess extends PtyProcess {
       myErrMasterFD = errMasterFD;
       myConsole = console;
       myException = null;
+      // BashSupport Pro
+      myAdditionalPtySlaveName = additionalPtySlaveName;
+      myAdditionalPtyMasterFD = additionalPtyMasterFD;
     }
 
     int execute(String[] cmd, String[] env, String dir) throws IOException {
-      return exec(cmd, env, dir, mySlaveName, myMasterFD, myErrSlaveName, myErrMasterFD, myConsole);
+      return exec(cmd, env, dir, mySlaveName, myMasterFD, myErrSlaveName, myErrMasterFD, myConsole, /*BashSupport Pro*/myAdditionalPtySlaveName, myAdditionalPtyMasterFD);
     }
 
     @Override
@@ -402,6 +484,9 @@ public final class UnixPtyProcess extends PtyProcess {
         }
         myPty.breakRead();
         if (myErrPty != null) myErrPty.breakRead();
+
+        // BashSupport Pro
+        if (myAdditionalPty != null) myAdditionalPty.breakRead();
       }
     }
 

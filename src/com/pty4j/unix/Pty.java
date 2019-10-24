@@ -74,11 +74,11 @@ public final class Pty {
     // until we've read all the output from it.
     //
     // See this report for details: https://developer.apple.com/forums/thread/663632
-    mySlaveFD = openOpenTtyToPreserveOutputAfterTermination ? CLibrary.open(mySlaveName, CLibrary.O_WRONLY) : -1;
+    mySlaveFD = openOpenTtyToPreserveOutputAfterTermination ? BashSupportCLibrary.open(mySlaveName, BashSupportCLibrary.O_WRONLY) : -1;
 
     myIn = new PTYInputStream(this);
     myOut = new PTYOutputStream(this);
-    CLibrary.pipe(myPipe);
+    BashSupportCLibrary.pipe(myPipe);
   }
 
   public String getSlaveName() {
@@ -202,7 +202,7 @@ public final class Pty {
         if (mySlaveFD != -1) {
           int fd = mySlaveFD;
           mySlaveFD = -1;
-          int status = CLibrary.close(fd);
+          int status = BashSupportCLibrary.close(fd);
           if (status == -1) {
             throw new IOException("Close error");
           }
@@ -218,13 +218,13 @@ public final class Pty {
   }
 
   private int close0(int fd) throws IOException {
-    int ret = CLibrary.close(fd);
+    int ret = BashSupportCLibrary.close(fd);
 
     breakRead();
 
     synchronized (mySelectLock) {
-      CLibrary.close(myPipe[0]);
-      CLibrary.close(myPipe[1]);
+      BashSupportCLibrary.close(myPipe[0]);
+      BashSupportCLibrary.close(myPipe[1]);
       myPipe[0] = -1;
       myPipe[1] = -1;
     }
@@ -233,7 +233,7 @@ public final class Pty {
   }
 
   void breakRead() {
-    CLibrary.write(myPipe[1], new byte[1], 1);
+    BashSupportCLibrary.write(myPipe[1], new byte[1], 1);
   }
 
   int read(byte[] buf, int len) throws IOException {
@@ -247,32 +247,32 @@ public final class Pty {
       haveBytes = useSelect ? select(myPipe[0], fd) : poll(myPipe[0], fd);
     }
 
-    return haveBytes ? CLibrary.read(fd, buf, len) : -1;
+    return haveBytes ? BashSupportCLibrary.read(fd, buf, len) : -1;
   }
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean poll(int pipeFd, int fd) {
     Pollfd[] poll_fds = new Pollfd[]{
-      new Pollfd(pipeFd, CLibrary.POLLIN),
-      new Pollfd(fd, CLibrary.POLLIN)
+      new Pollfd(pipeFd, BashSupportCLibrary.POLLIN),
+      new Pollfd(fd, BashSupportCLibrary.POLLIN)
     };
-    while (CLibrary.poll(poll_fds, -1) <= 0) {
-      int errno = CLibrary.errno();
-      if (errno != CLibrary.EAGAIN && errno != CLibrary.EINTR) return false;
+    while (BashSupportCLibrary.poll(poll_fds, -1) <= 0) {
+      int errno = BashSupportCLibrary.errno();
+      if (errno != BashSupportCLibrary.EAGAIN && errno != BashSupportCLibrary.EINTR) return false;
     }
-    return (poll_fds[1].getRevents() & CLibrary.POLLIN) != 0;
+    return (poll_fds[1].getRevents() & BashSupportCLibrary.POLLIN) != 0;
   }
 
   private static boolean select(int pipeFd, int fd) {
     FDSet set = new fd_set();
     set.FD_SET(pipeFd);
     set.FD_SET(fd);
-    CLibrary.select(Math.max(fd, pipeFd) + 1, set);
+    BashSupportCLibrary.select(Math.max(fd, pipeFd) + 1, set);
     return set.FD_ISSET(fd);
   }
 
   int write(byte[] buf, int len) {
-    return CLibrary.write(myMaster, buf, len);
+    return BashSupportCLibrary.write(myMaster, buf, len);
   }
 
 }

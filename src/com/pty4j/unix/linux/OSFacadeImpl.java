@@ -20,7 +20,7 @@
  */
 package com.pty4j.unix.linux;
 
-import com.pty4j.unix.CLibrary;
+import com.pty4j.unix.BashSupportCLibrary;
 import com.pty4j.unix.PtyHelpers;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -122,7 +122,7 @@ public class OSFacadeImpl implements PtyHelpers.OSFacade {
 
   @Override
   public int getpt() {
-    return CLibrary.open("/dev/ptmx", CLibrary.O_RDWR | CLibrary.O_NOCTTY);
+    return BashSupportCLibrary.open("/dev/ptmx", BashSupportCLibrary.O_RDWR | BashSupportCLibrary.O_NOCTTY);
   }
 
   @Override
@@ -157,7 +157,7 @@ public class OSFacadeImpl implements PtyHelpers.OSFacade {
 
   @Override
   public int pipe(int[] pipe2) {
-    return CLibrary.pipe(pipe2);
+    return BashSupportCLibrary.pipe(pipe2);
   }
 
   @Override
