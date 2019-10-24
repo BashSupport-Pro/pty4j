@@ -129,13 +129,15 @@ public class PtyProcessBuilder {
             myInitialColumns,
             myInitialRows,
             myWindowsAnsiColorEnabled,
-            myUnixOpenTtyToPreserveOutputAfterTermination);
+            myUnixOpenTtyToPreserveOutputAfterTermination, /*BashSupport Pro*/ myPassAdditionalPty);
     if (Platform.isWindows()) {
       if (myCygwin) {
+        // fixme(BashSupport Pro): pass additional pty
         return new CygwinPtyProcess(myCommand, myEnvironment, myDirectory, myLogFile, myConsole);
       }
       if (myUseWinConPty && !myConsole) {
         try {
+          // fixme(BashSupport Pro): pass additional pty
           return new WinConPtyProcess(options);
         }
         catch (UnsatisfiedLinkError e) {
@@ -145,5 +147,14 @@ public class PtyProcessBuilder {
       return new WinPtyProcess(options, myConsole);
     }
     return new UnixPtyProcess(options, myConsole);
+  }
+
+  // changes for BashSupport Pro
+  private boolean myPassAdditionalPty;
+
+  @NotNull
+  public PtyProcessBuilder setPassAdditionalPty(boolean passAdditionalPty) {
+    myPassAdditionalPty = passAdditionalPty;
+    return this;
   }
 }

@@ -1,7 +1,8 @@
 import java.text.SimpleDateFormat
 import org.apache.tools.ant.filters.FixCrLfFilter
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import jetbrains.sign.GpgSignSignatoryProvider
+// disabled for BashSupport Pro
+/*import jetbrains.sign.GpgSignSignatoryProvider
 
 buildscript {
   repositories {
@@ -10,16 +11,20 @@ buildscript {
   dependencies {
     classpath 'com.jetbrains:jet-sign:38'
   }
-}
+}*/
 
 plugins {
   id 'java-library'
   id 'maven-publish'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+
+  // BashSupport Pro
+  id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 apply plugin: 'maven-publish'
-apply plugin: 'signing'
+// BashSupport Pro
+// apply plugin: 'signing'
 
 def pathToNativeInJar = 'resources/com/pty4j/native'
 def projectVersion = new File(rootProject.projectDir, 'VERSION').text
@@ -27,6 +32,11 @@ def projectVersion = new File(rootProject.projectDir, 'VERSION').text
 version = projectVersion
 group = 'org.jetbrains.pty4j'
 archivesBaseName = 'pty4j'
+
+// BashSupport Pro
+pathToNativeInJar = 'resources/bashpro/pty4j/native'
+group 'com.bashsupport.pty4j'
+archivesBaseName = 'pty4j-bashsupport'
 
 sourceSets {
   main {
@@ -67,6 +77,8 @@ repositories {
 }
 
 jar {
+  archiveClassifier.set("original")
+
   from('os') {
     include '**/*'
     into pathToNativeInJar
@@ -104,7 +116,9 @@ task testJar(type: Test, dependsOn: [jar, testClasses]) {
                             sourceSets.test.output.classesDirs,
                             sourceSets.test.output.resourcesDir,
                             configurations.testRuntimeClasspath)
-  systemProperty 'pty4j.preferred.native.folder', 'false'
+  // BashSupport Pro
+  systemProperty 'pty4j-bashsupport.preferred.native.folder', 'false'
+  //systemProperty 'pty4j.preferred.native.folder', 'false'
   shouldRunAfter test
 }
 
@@ -113,12 +127,15 @@ check.dependsOn test, testJar
 dependencies {
   implementation 'org.jetbrains.pty4j:purejavacomm:0.0.11.1'
   implementation 'org.jetbrains:annotations:20.1.0'
-  implementation "org.slf4j:slf4j-api:1.7.36"
-  implementation 'net.java.dev.jna:jna:5.12.1'
-  implementation 'net.java.dev.jna:jna-platform:5.12.1'
-  testImplementation 'com.google.guava:guava:31.1-jre'
+  implementation "org.slf4j:slf4j-api:1.7.32"
+  implementation 'net.java.dev.jna:jna:5.10.0'
+  implementation 'net.java.dev.jna:jna-platform:5.10.0'
+  testImplementation 'com.google.guava:guava:31.0.1-jre'
   testImplementation 'junit:junit:4.13.2'
   testRuntimeOnly "org.slf4j:slf4j-simple:1.7.36"
+
+  // BashSupport Pro
+  implementation 'org.jetbrains.pty4j:pty4j:0.12.11'
 }
 
 ext.publishingUser = System.getenv('PUBLISHING_USER')
@@ -140,9 +157,9 @@ publishing {
       group rootProject.group
       artifactId archivesBaseName
       artifact sourcesZip
-      artifact javadocJar {
+      /*artifact javadocJar {
         classifier 'javadoc'
-      }
+      }*/
       version rootProject.ext.publishingUser != null ? projectVersion : projectVersion + '-SNAPSHOT'
       pom {
         name = 'pty4j'
@@ -180,7 +197,37 @@ publishing {
   }
 }
 
+// disabled for BashSupport Pro
+/*
 signing {
   sign publishing.publications
   signatories = new GpgSignSignatoryProvider()
 }
+*/
+
+// changes for BashSupport Pro
+shadowJar {
+  configurations = []
+  archiveClassifier.set('')
+  relocate('com.pty4j', 'bashpro.pty4j') {
+    exclude 'com.pty4j.PtyProcess'
+    exclude 'com.pty4j.WinSize'
+    exclude 'com.pty4j.util.LazyValue'
+  }
+
+  // copied from jar {}
+  from('os') {
+    include '**/*'
+    into pathToNativeInJar
+  }
+  manifest {
+    attributes(
+            'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+            'Created-By': "Gradle ${gradle.gradleVersion}",
+            'Build-Jdk': "${System.properties['java.runtime.version']}",
+            'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+    )
+  }
+}
+
+tasks.test.dependsOn tasks.shadowJar

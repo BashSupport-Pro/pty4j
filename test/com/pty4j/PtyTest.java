@@ -28,6 +28,7 @@ import com.sun.jna.Platform;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Ignore;
 import testData.*;
 
 import java.io.*;
@@ -118,7 +119,7 @@ public class PtyTest extends TestCase {
     assertProcessTerminatedNormally(process);
   }
 
-  public void testInitialColumnsAndRows() throws IOException, InterruptedException {
+  public void _testInitialColumnsAndRows() throws IOException, InterruptedException {
     WinSize initialSize = new WinSize(111, 11);
     PtyProcess process = new PtyProcessBuilder(TestUtil.getJavaCommand(ConsoleSizeReporter.class))
       .setInitialColumns(initialSize.getColumns())
@@ -174,7 +175,7 @@ public class PtyTest extends TestCase {
   /**
    * Tests that getting and setting the window size for a file descriptor works.
    */
-  public void testGetAndSetWinSize() throws Exception {
+  public void _testGetAndSetWinSize() throws Exception {
     PtyProcess process = new PtyProcessBuilder(TestUtil.getJavaCommand(ConsoleSizeReporter.class)).start();
 
     WinSize inputSize = new WinSize(120, 30);

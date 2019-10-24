@@ -389,8 +389,11 @@ public class PtyHelpers {
                             int fdm,
                             String err_pts_name,
                             int err_fdm,
-                            boolean console) {
+                            boolean console,
+                            /*BashSupport Pro*/
+                            String add_pts_name,
+                            int add_pty_fdm) {
     PtyExecutor executor = getPtyExecutor();
-    return executor.execPty(full_path, argv, envp, dirpath, pts_name, fdm, err_pts_name, err_fdm, console);
+    return executor.execPty(full_path, argv, envp, dirpath, pts_name, fdm, err_pts_name, err_fdm, console, /*BashSupport Pro*/add_pts_name, add_pty_fdm);
   }
 }
