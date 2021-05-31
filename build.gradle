@@ -95,8 +95,8 @@ task testJar(type: Test, dependsOn: [jar, testClasses]) {
 check.dependsOn test, testJar
 
 dependencies {
-  implementation     'org.jetbrains.pty4j:pty4j:0.11.4'
-  testImplementation 'org.jetbrains.pty4j:pty4j:0.11.4'
+  implementation     'org.jetbrains.pty4j:pty4j:0.11.1'
+  testImplementation 'org.jetbrains.pty4j:pty4j:0.11.1'
 
   implementation     'org.jetbrains.pty4j:purejavacomm:0.0.11.1'
   testImplementation 'org.jetbrains.pty4j:purejavacomm:0.0.11.1'

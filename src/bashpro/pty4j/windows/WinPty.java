@@ -1,5 +1,6 @@
 package bashpro.pty4j.windows;
 
+import bashpro.pty4j.WinSizeWrapper;
 import bashpro.pty4j.util.PtyUtil;
 import com.pty4j.WinSize;
 import com.sun.jna.*;
@@ -209,9 +210,9 @@ public class WinPty {
     if (myClosed) {
       throw new IOException("Unable to set window size: closed=" + myClosed + ", winSize=" + winSize);
     }
-    boolean result = INSTANCE.winpty_set_size(myWinpty, winSize.getColumns(), winSize.getRows(), null);
+    boolean result = INSTANCE.winpty_set_size(myWinpty, WinSizeWrapper.getColumns(winSize), WinSizeWrapper.getRows(winSize), null);
     if (result) {
-      myLastWinSize = new WinSize(winSize.getColumns(), winSize.getRows());
+      myLastWinSize = new WinSize(WinSizeWrapper.getColumns(winSize), WinSizeWrapper.getRows(winSize));
     }
   }
 
