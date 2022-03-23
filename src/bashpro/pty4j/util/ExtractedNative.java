@@ -28,7 +28,7 @@ class ExtractedNative {
 //      "linux/x86/libpty-bashpro.so",
       "linux/x86-64/libpty-bashpro.so",
       "linux/aarch64/libpty-bashpro.so",
-//      "linux/arm/libpty-bashpro.so",
+      "linux/arm/libpty-bashpro.so",
       "linux/ppc64le/libpty-bashpro.so",
 //      "linux/mips64el/libpty-bashpro.so",
       "win/x86/winpty-agent.exe",

@@ -49,6 +49,7 @@ cd "$DIR"
 buildDocker "ubuntu:xenial" linux_x86_64
 buildDocker "ppc64le/ubuntu:xenial" linux_ppc64le
 buildDocker "arm64v8/ubuntu:xenial" linux_aarch64
+buildDocker "arm32v7/ubuntu:xenial" linux_arm
 
 # https://github.com/hypriot/qemu-register doesn't support mips654 yet
 #buildDocker "mips64le/debian:stable" linux_mips64el
